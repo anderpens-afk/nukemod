@@ -1,0 +1,15 @@
+{
+"schemaVersion": 1,
+"id": "nukemod",
+"version": "1.0.0",
+"name": "Nuke Mod",
+"description": "Adds a huge nuclear bomb block and a pulsar block.",
+"environment": "*",
+"entrypoints": { "main": ["com.example.nukemod.NukeMod"] },
+"depends": {
+"fabricloader": ">=0.15.0",
+"minecraft": "1.20.1",
+"java": ">=17",
+"fabric-api": "*"
+}
+}
