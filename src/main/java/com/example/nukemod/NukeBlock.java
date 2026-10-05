@@ -1,52 +1,42 @@
 package com.example.nukemod;
 
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroups;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.util.Identifier;
 
-public class NukeBlock extends Block {
-private static final float POWER = 35.0f;
+public class NukeMod implements ModInitializer {
+    public static final String MOD_ID = "nukemod";
 
-public NukeBlock(Settings settings) {
-super(settings);
-}
+    public static final Block NUKE_BLOCK = new NukeBlock(
+            AbstractBlock.Settings.create().strength(1.0f));
 
-private void detonate(World world, BlockPos pos) {
-if (world.isClient) return;
-world.removeBlock(pos, false);
-world.playSound(null, pos, SoundEvents.ENTITY_GENERIC_EXPLODE,
-SoundCategory.BLOCKS, 4.0f, 0.5f);
-world.createExplosion(null,
-pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-POWER, true, World.ExplosionSourceType.TNT);
-}
+    public static final Block PULSAR_BLOCK = new PulsarBlock(
+            AbstractBlock.Settings.create().strength(5.0f).luminance(s -> 15));
 
-@Override
-public void neighborUpdate(BlockState state, World world, BlockPos pos,
-Block sourceBlock, BlockPos sourcePos, boolean notify) {
-if (world.isReceivingRedstonePower(pos)) {
-detonate(world, pos);
-}
-}
+    public static BlockEntityType<PulsarBlockEntity> PULSAR_BE;
 
-@Override
-public ActionResult onUse(BlockState state, World world, BlockPos pos,
-PlayerEntity player, Hand hand, BlockHitResult hit) {
-ItemStack stack = player.getStackInHand(hand);
-if (stack.isOf(Items.FLINT_AND_STEEL)) {
-detonate(world, pos);
-if (!player.isCreative()) stack.damage(1, player, p -> p.sendToolBreakStatus(hand));
-return ActionResult.success(world.isClient);
-}
-return super.onUse(state, world, pos, player, hand, hit);
-}
+    @Override
+    public void onInitialize() {
+        registerBlock("nuke_block", NUKE_BLOCK);
+        registerBlock("pulsar", PULSAR_BLOCK);
+
+        PULSAR_BE = Registry.register(Registries.BLOCK_ENTITY_TYPE,
+                new Identifier(MOD_ID, "pulsar"),
+                BlockEntityType.Builder.create(PulsarBlockEntity::new, PULSAR_BLOCK).build(null));
+    }
+
+    private static void registerBlock(String name, Block block) {
+        Identifier id = new Identifier(MOD_ID, name);
+        Registry.register(Registries.BLOCK, id, block);
+        Item item = Registry.register(Registries.ITEM, id, new BlockItem(block, new Item.Settings()));
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register(e -> e.add(item));
+    }
 }
